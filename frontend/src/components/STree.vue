@@ -17,8 +17,8 @@
           </p>
           <Row>
             <Col span="8">
-              <span>服务类型: </span>
-              <span class="node_desc">{{ service_type }}</span>
+              <span>模板类型: </span>
+              <span class="node_desc">{{ tpl_type }}</span>
             </Col>
             <Col span="8">
               <span>OP负责人: </span>
@@ -30,13 +30,13 @@
             </Col>
           </Row>
         </Card>
-        <Card :style="{margin: '25px 0 0 0'}">
+        <Card :style="{margin: '25px 0 10px 0'}" v-if="instance_card">
           <p slot="title">
             <Icon type="ios-card" size="24"></Icon>&nbsp;节点实例信息
           </p>
           <Row :style="{margin: '-5px 0 5px'}">
             <Col span="8">
-            <Button icon="ios-add-circle-outline" :style="{color: '#87b87f'}">机器信息</Button>
+            <Button icon="ios-add-circle-outline" :style="{color: '#87b87f'}" @click="show_instance_dlg">机器信息</Button>
             <Button icon="ios-cloud-circle-outline" :style="{color: '#87b87f'}">元信息</Button>
             </Col>
             <Col span="4" offset="12">
@@ -50,10 +50,16 @@
               <Button type="primary" size="small" style="margin-right: 5px" @click="instance_edit(index)">编辑</Button>
               <Button type="error" size="small" @click="instance_remove(index)">删除</Button>
             </template>
+            <template slot-scope="{ row, index }" slot="instance_status">
+							<i-switch size="large" v-model="row.status">
+								<span slot="open">在线</span>
+								<span slot="close">下线</span>
+							</i-switch>
+            </template>
           </Table>
           <div style="margin: 10px;overflow: hidden">
             <div style="float: right;">
-            	<Page :total="100" :current="1" @on-change="changePage"></Page>
+              <Page :total="instance_total" :current="1" @on-change="change_page"></Page>
             </div>
           </div>
         </Card>
@@ -63,9 +69,9 @@
     <!-- NOTE(服务树右键菜单相关操作) -->
     <div id="right_menu" v-bind:style="show_menu_style">
       <ul>
-        <li id="add_node" @click="add_node"><Icon type="ios-add-circle-outline" /> 节点添加</li>
-        <li id="del_node" @click="del_node"><Icon type="ios-remove-circle-outline" /> 节点删除</li>
-        <li id="ren_node" @click="ren_node"><Icon type="ios-contrast" /> 节点改名</li>
+        <li v-if="show_add" @click="add_node"><Icon type="ios-add-circle-outline" /> 节点添加</li>
+        <li v-if="show_del" @click="del_node"><Icon type="ios-remove-circle-outline" /> 节点删除</li>
+        <li v-if="show_ren" @click="ren_node"><Icon type="ios-contrast" /> 节点改名</li>
       </ul>
     </div>
 
@@ -75,6 +81,11 @@
         <span>节点添加表单</span>
       </p>
       <Form :model="formItem" :label-width="80">
+        <FormItem label="节点模板">
+					<Select v-model="tpl">
+						<Option v-for="item in tpl_list" :value="item" :key="item">{{ item }}</Option>
+					</Select>
+        </FormItem>
         <FormItem label="节点类型">
           <RadioGroup v-model="formItem.node_type">
             <Radio label="directory"><span>目录节点</span></Radio>
@@ -119,6 +130,17 @@
     </Modal>
 
     <!-- 实例信息相关操作 -->
+    <Modal v-model="instance_dlg" :closable="false" width="560" @on-ok="do_add_instance" @on-cancel="cancel">
+      <p slot="header" style="text-align:center">
+        <Icon type="ios-apps"></Icon>
+        <span>节点实例表单</span>
+      </p>
+      <Form :model="formItem" :label-width="80">
+        <FormItem label="节点名称">
+        <Input v-model="formItem.new_instance" type="textarea" :autosize="{minRows: 4}" placeholder="实例名称, 一行一个IP."></Input>
+        </FormItem>
+      </Form>
+    </Modal>
 
   </div>
 </template>
@@ -128,6 +150,7 @@ import 'jquery'
 import 'ztree'
 import 'ztree/css/metroStyle/metroStyle.css'
 import axios from 'axios'
+import qs from 'qs'
 import expandRow from '@/components/SInfo'
 
 export default {
@@ -139,21 +162,30 @@ export default {
       tip_node: null,
       ztree_obj: null,
       show_menu_style: null,
+      tpl: '默认模板',
+      tpl_list: null,
+      show_add: true,
+      show_del: true,
+      show_ren: true,
       add_node_dlg: false,
       del_node_dlg: false,
       ren_node_dlg: false,
+      instance_card: false,
       formItem: {
         node_type: 'leaf',
         add_node_name: null,
         op_manager: null,
         rd_manager: null,
-        new_node_name: null
+        new_node_name: null,
+        new_instance: null
       },
       columns: [
       ],
       instances: [
       ],
-      service_type: null,
+      instance_total: 0,
+      instance_dlg: false,
+      tpl_type: null,
       op_manager: null,
       rd_manager: null,
       setting: {
@@ -181,10 +213,29 @@ export default {
     ztree_click(event, tree_id, node_obj) {
       let tip_node = node_obj.id;
       this.tip_node = tip_node;
+      if (node_obj.isParent == false) {
+        this.instance_card = true;
+        this.load_instance(0);
+      } else {
+        this.instance_card = false;
+      }
+      this.load_node_info();
     },
     ztree_right_click(event, tree_id, node_obj) {
       if (node_obj.pid == '') {
+        // NOTE(根节点)
+        this.show_del = false;
+        this.show_ren = false;
+      } else if (node_obj.name == 'backpool') {
+        // NOTE(backpool)
+        this.show_add = false;
+        this.show_del = false;
+        this.show_ren = false;
         return;
+      } else {
+        this.show_add = true;
+        this.show_del = true;
+        this.show_ren = true;
       }
       this.ztree_obj.selectNode(node_obj);  
       let tip_node = node_obj.id;
@@ -214,15 +265,43 @@ export default {
       let tip_node_id = tip_node_obj.id;
       let tip_node_pid = tip_node_obj.pid
       let tip_node_name = tip_node_obj.name;
+			let is_leaf = 1
       let is_parent = false;
       if (this.formItem.node_type == 'directory') {
         is_parent = true;
+				is_leaf = 0;
       }
+			console.log(this.formItem.node_type)
+			console.log(is_leaf);
       let new_name = this.formItem.add_node_name;
-      let new_node = {id: tip_node_id + 'test', pid: tip_node_id, name: new_name, isParent: is_parent};
-      this.ztree_obj.addNodes(tip_node_obj, new_node);
-      this.formItem.node_type = 'leaf';
-      this.formItem.add_node_name = null;
+      let url = 'http://localhost:5000/stree/api/v1/add/node';
+      let post_data = qs.stringify({
+				tpl: this.tpl,
+        leaf: is_leaf,
+        pnode: tip_node_id,
+        new_node: new_name,
+				op: this.formItem.op_manager,
+				rd: this.formItem.rd_manager
+      });
+			console.log(post_data);
+      axios.post(url, post_data).then((res) => {
+        let r = res.data;
+        if (r.code != 0) {
+          this.$Message.warning(r.msg);
+          return;
+        }
+        let new_node = {
+          id: tip_node_id + new_name,
+          pid: tip_node_id,
+          name: new_name,
+          isParent: is_parent
+        };
+        this.ztree_obj.addNodes(tip_node_obj, new_node);
+        this.formItem.node_type = 'leaf';
+        this.formItem.add_node_name = null;
+      }, (res) => {
+        this.$Message.error('请求/load/tree接口失败!');
+      });
     },
     cancel() {
     },
@@ -236,7 +315,12 @@ export default {
         if (nodes[0].children && nodes[0].children.length > 0) {
           this.$Message.warning('该节点为父节点, 不能进行删除!');
         } else {
-          this.ztree_obj.removeNode(nodes[0]);
+          let node_obj = nodes[0];
+          let post_data = qs.stringify({
+            node: node_obj.id
+          });
+          console.log(post_data);
+          this.ztree_obj.removeNode(node_obj);
         }
       }
     },
@@ -265,72 +349,135 @@ export default {
       let name = this.instances[index].name;
       console.log(name);
     },
-    changePage(index) {
+    change_page(index) {
       console.log(index);
+      let offset = (index - 1) * 10;
+      this.load_instance(offset);
+    },
+    load_instance(offset) {
+      this.columns = [
+        {
+          type: 'expand', width: 50,
+          render: (h, params) => {
+            return h(expandRow, {
+              props: {
+                row: params.row
+              }
+            })
+          }
+        },
+        {title: '主机名', key: 'hostname', sortable: true},
+        {title: 'IP地址', key: 'ip', sortable: true},
+        {title: '服役状态', key: 'status', width: 150, slot: 'instance_status'},
+        {title: '部署分组', key: 'deploy', width: 150},
+        {title: '定时任务', key: 'schedule', width: 150},
+        {title: '操作', key: 'operation', width: 150, slot: 'action'}
+      ];
+      let post_data = qs.stringify({
+        node: this.tip_node,
+        offset: offset
+      });
+      let url = 'http://localhost:5000/stree/api/v1/load/instance';
+      axios.post(url, post_data).then((res) => {
+        this.instances = res.data.data.instances;
+        this.instance_total = res.data.data.total;
+      }, (res) => {
+        console.log('Request table list intf error.');
+      });
+    },
+    load_node_info() {
+      let url = 'http://localhost:5000/stree/api/v1/load/node/info';
+      let post_data = qs.stringify({
+        node: this.tip_node
+      });
+      axios.post(url, post_data).then((res) => {
+        console.log(res.data);
+        this.tpl_type = res.data.data.tpl;
+        this.op_manager = res.data.data.op;
+        this.rd_manager = res.data.data.rd;
+      }, (res) => {
+        console.log('Request node info intf error.');
+      });
+    },
+    show_instance_dlg() {
+      this.instance_dlg = true;
+    },
+    do_add_instance() {
+      console.log(this.formItem.new_instance);
+      let post_data = qs.stringify({
+        node: this.tip_node,
+        ips: this.formItem.new_instance
+      });
+      let url = 'http://localhost:5000/stree/api/v1/add/instance';
+      axios.post(url, post_data).then((res) => {
+        console.log(res.data);
+        this.load_instance(0);
+      }, (res) => {
+        console.log('Request add instance intf error.');
+      });
     }
   },
-  mounted() {
-    draw_tree(this);
-    load_instances(this);
+  mounted() { 
+    load_tree(this);
+    load_tpl(this);
   }
 }
 
-function load_instances(_this) {
-  _this.columns = [
-    {
-      type: 'expand', width: 50,
-      render: (h, params) => {
-        return h(expandRow, {
-          props: {
-            row: params.row
-          }
-        })
-      }
-    },
-    {title: '名字', key: 'name', sortable: true},
-    {title: '年龄', key: 'age', sortable: true},
-    {title: '操作', key: 'action', width: 150, slot: 'action'}
-  ];
-  let url = 'http://localhost:5000/list';
+function load_tree(_this) {
+  let url = 'http://localhost:5000/stree/api/v1/load/tree';
   axios.get(url).then((res) => {
-    _this.instances = res.data;
+    let r = res.data;
+    if (r.code != 0) {
+      _this.$Message.error(r.msg);
+      return;
+    }
+    _this.tree_nodes = r.data.tree_list;
+    _this.tip_node = r.data.expand_node;
+    let expand_node = 'com.card';
+
+    $.fn.zTree.init($('#service_tree'), _this.setting, _this.tree_nodes);
+    _this.ztree_obj = $.fn.zTree.getZTreeObj('service_tree');
+    _this.ztree_obj.selectNode(_this.ztree_obj.getNodeByParam('id', expand_node, null));
+
+    _this.load_node_info();
   }, (res) => {
-    console.log('Request table list intf error.');
+    _this.$Message.error('请求/load/tree接口失败!');
   });
-}
+};
 
-function draw_tree(_this) {
-  let root = 'com';
-  let tree_nodes = [
-    {id:root, pid:root, name:root},
-    {id:'com.card', pid:root, name:'card'}, 
-    {id:'com.card.app1', pid:'com.card', name:'app1'}, 
-    {id:'com.credit', pid:root, name:'credit'}, 
-    {id:'com.credit.bbs', pid:'com.credit', name:'bbs'}, 
-    {id:'com.credit.pay', pid:'com.credit', name:'pay'}, 
-  ];
-  _this.tree_nodes = tree_nodes;
-  _this.tip_node = root;
-  let expand_node = 'com.card';
+function load_tpl(_this) {
+  let url = 'http://localhost:5000/stree/api/v1/load/tpl';
+  axios.get(url).then((res) => {
+    let r = res.data;
+    if (r.code != 0) {
+      _this.$Message.error(r.msg);
+      return;
+    }
+    _this.tpl_list = r.data;
+  }, (res) => {
+    _this.$Message.error('请求/load/tpl接口失败!');
+  });
+};
 
-  $.fn.zTree.init($('#service_tree'), _this.setting, _this.tree_nodes);
-  _this.ztree_obj = $.fn.zTree.getZTreeObj('service_tree');
-  _this.ztree_obj.selectNode(_this.ztree_obj.getNodeByParam('id', expand_node, null));
-}
+
 
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
 .stree{
-  height: 750px;
+  height: 640px;
   border: 1px solid #dcdee2;
 }
 .split-pane{
   padding: 6px;
+  height: 630px;
+  overflow: auto;
 }
 .split-right-pane{
   padding: 0 15px;
+  height: 630px;
+  overflow: auto;
 }
 .ztree {
   margin: 0;

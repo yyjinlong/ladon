@@ -40,3 +40,6 @@ class STreeApplication(WSGIApplication):
 
         import ladon.fe.v1.index as index
         app.register_blueprint(index.bp, url_prefix='')
+
+        import ladon.fe.v1.stree as stree
+        app.register_blueprint(stree.bp, url_prefix='/stree/api/v1')

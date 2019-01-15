@@ -4,6 +4,7 @@ import Home from '@/components/Home'
 import STree from '@/components/STree'
 import Admin from '@/components/Admin'
 import Help from '@/components/Help'
+import Privilege from '@/components/Privilege'
 
 Vue.use(Router)
 
@@ -24,7 +25,8 @@ export default new Router({
       component: Home,
       children: [
         {path: 'admin', name: 'admin', component: Admin},
-        {path: 'help', name: 'help', component: Help}
+        {path: 'help', name: 'help', component: Help},
+        {path: 'privilege', name: 'privilege', component: Privilege}
       ]
     }
   ],

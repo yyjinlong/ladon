@@ -2,7 +2,7 @@
   <div style="padding: 10px;">
     <Breadcrumb :style="{margin: '20px 0'}">
       <BreadcrumbItem to="/">服务树</BreadcrumbItem>
-      <BreadcrumbItem>Admin</BreadcrumbItem>
+      <BreadcrumbItem>Privilege</BreadcrumbItem>
     </Breadcrumb>
     <Card>
       <p>{{ msg }}</p>
@@ -15,7 +15,7 @@ export default {
   name: 'Admin',
   data() {
     return {
-      msg: 'service tree admin mange config.'
+      msg: 'service tree privilege mange config.'
     }
   },
   methods: {
