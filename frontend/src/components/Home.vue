@@ -2,9 +2,14 @@
   <div class="layout">
     <Layout>
       <Header :style="{position: 'fixed', width: '100%', 'z-index': '100'}">
-        <Menu mode="horizontal" theme="dark" active-name="1" @on-select="jump">
-          <div class="layout-logo"></div>
+        <Menu mode="horizontal" theme="dark" active-name="stree" @on-select="jump">
+          <div class="layout-logo">
+            <img src="../assets/logo.png" style="width: 90px; height: 35px;" />
+          </div>
           <div class="layout-nav">
+            <MenuItem name="stree">
+              <Icon type="md-git-network"></Icon><strong>主页</strong>
+            </MenuItem>
             <MenuItem name="privilege">
               <Icon type="md-eye"></Icon><strong>权限</strong>
             </MenuItem>
@@ -52,14 +57,14 @@ export default {
     overflow: hidden;
 }
 .layout-logo{
-    width: 100px;
-    height: 30px;
-    background: #5b6270;
+    width: 110px;
+    height: 35px;
+    /* background: #5b6270; */
     border-radius: 3px;
     float: left;
     position: relative;
-    top: 15px;
-    left: 20px;
+    top: 8px;
+    left: 10px;
 }
 .layout-nav{
     width: 420px;
@@ -71,7 +76,7 @@ export default {
 }
 .ivu-layout-header {
     background: #515a6e;
-    padding: 0 50px;
+    padding: 0 0;
     height: 52px;
     line-height: 52px;
 }

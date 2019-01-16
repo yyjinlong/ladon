@@ -1,10 +1,10 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 import Home from '@/components/Home'
-import STree from '@/components/STree'
-import Admin from '@/components/Admin'
-import Help from '@/components/Help'
-import Privilege from '@/components/Privilege'
+import STree from '@/components/index/STree'
+import Admin from '@/components/other/Admin'
+import Help from '@/components/other/Help'
+import Privilege from '@/components/other/Privilege'
 
 Vue.use(Router)
 

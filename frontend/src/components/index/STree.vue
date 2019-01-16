@@ -75,6 +75,7 @@
       </ul>
     </div>
 
+    <!-- NOTE(服务树右键菜单对话框) -->
     <Modal v-model="add_node_dlg" :closable="false" width="560" @on-ok="do_add_node" @on-cancel="cancel">
       <p slot="header" style="text-align:center">
         <Icon type="ios-add-circle-outline"></Icon>
@@ -103,7 +104,6 @@
         </FormItem>
       </Form>
     </Modal>
-
     <Modal v-model="del_node_dlg" :closable="false" width="360" @on-ok="do_del_node" @on-cancel="cancel">
       <p slot="header" style="color:#f60; text-align:center">
         <Icon type="ios-information-circle"></Icon>
@@ -113,7 +113,6 @@
         <strong style="color:#f60;">请慎重确认要删除该节点吗?</strong>
       </div>
     </Modal>
-
     <Modal v-model="ren_node_dlg" :closable="false" width="560" @on-ok="do_ren_node" @on-cancel="cancel">
       <p slot="header" style="text-align:center">
         <Icon type="ios-contrast"></Icon>
@@ -129,7 +128,7 @@
       </Form>
     </Modal>
 
-    <!-- 实例信息相关操作 -->
+    <!-- 实例信息对话框相关操作 -->
     <Modal v-model="instance_dlg" :closable="false" width="560" @on-ok="do_add_instance" @on-cancel="cancel">
       <p slot="header" style="text-align:center">
         <Icon type="ios-apps"></Icon>
@@ -151,7 +150,7 @@ import 'ztree'
 import 'ztree/css/metroStyle/metroStyle.css'
 import axios from 'axios'
 import qs from 'qs'
-import expandRow from '@/components/SInfo'
+import expandRow from '@/components/index/SInfo'
 
 export default {
   name: 'STree',
@@ -210,6 +209,40 @@ export default {
     }
   },
   methods: {
+    load_tree() {
+      let url = 'http://localhost:5000/stree/api/v1/load/tree';
+      axios.get(url).then((res) => {
+        let r = res.data;
+        if (r.code != 0) {
+          this.$Message.error(r.msg);
+          return;
+        }
+        this.tree_nodes = r.data.tree_list;
+        this.tip_node = r.data.expand_node;
+        let expand_node = 'com.card';
+
+        $.fn.zTree.init($('#service_tree'), this.setting, this.tree_nodes);
+        this.ztree_obj = $.fn.zTree.getZTreeObj('service_tree');
+        this.ztree_obj.selectNode(this.ztree_obj.getNodeByParam('id', expand_node, null));
+
+        this.load_node_info();
+      }, (res) => {
+        this.$Message.error('请求/load/tree接口失败!');
+      });
+    },
+    load_tpl() {
+      let url = 'http://localhost:5000/stree/api/v1/load/tpl';
+      axios.get(url).then((res) => {
+        let r = res.data;
+        if (r.code != 0) {
+          this.$Message.error(r.msg);
+          return;
+        }
+        this.tpl_list = r.data;
+      }, (res) => {
+        this.$Message.error('请求/load/tpl接口失败!');
+      });
+    },
     ztree_click(event, tree_id, node_obj) {
       let tip_node = node_obj.id;
       this.tip_node = tip_node;
@@ -382,7 +415,7 @@ export default {
         this.instances = res.data.data.instances;
         this.instance_total = res.data.data.total;
       }, (res) => {
-        console.log('Request table list intf error.');
+        this.$Message.error('请求/load/instance接口失败!');
       });
     },
     load_node_info() {
@@ -396,7 +429,7 @@ export default {
         this.op_manager = res.data.data.op;
         this.rd_manager = res.data.data.rd;
       }, (res) => {
-        console.log('Request node info intf error.');
+        this.$Message.error('请求/load/node/info接口失败!');
       });
     },
     show_instance_dlg() {
@@ -413,54 +446,15 @@ export default {
         console.log(res.data);
         this.load_instance(0);
       }, (res) => {
-        console.log('Request add instance intf error.');
+        this.$Message.error('请求/add/instance接口失败!');
       });
     }
   },
   mounted() { 
-    load_tree(this);
-    load_tpl(this);
+    this.load_tree();
+    this.load_tpl();
   }
 }
-
-function load_tree(_this) {
-  let url = 'http://localhost:5000/stree/api/v1/load/tree';
-  axios.get(url).then((res) => {
-    let r = res.data;
-    if (r.code != 0) {
-      _this.$Message.error(r.msg);
-      return;
-    }
-    _this.tree_nodes = r.data.tree_list;
-    _this.tip_node = r.data.expand_node;
-    let expand_node = 'com.card';
-
-    $.fn.zTree.init($('#service_tree'), _this.setting, _this.tree_nodes);
-    _this.ztree_obj = $.fn.zTree.getZTreeObj('service_tree');
-    _this.ztree_obj.selectNode(_this.ztree_obj.getNodeByParam('id', expand_node, null));
-
-    _this.load_node_info();
-  }, (res) => {
-    _this.$Message.error('请求/load/tree接口失败!');
-  });
-};
-
-function load_tpl(_this) {
-  let url = 'http://localhost:5000/stree/api/v1/load/tpl';
-  axios.get(url).then((res) => {
-    let r = res.data;
-    if (r.code != 0) {
-      _this.$Message.error(r.msg);
-      return;
-    }
-    _this.tpl_list = r.data;
-  }, (res) => {
-    _this.$Message.error('请求/load/tpl接口失败!');
-  });
-};
-
-
-
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
