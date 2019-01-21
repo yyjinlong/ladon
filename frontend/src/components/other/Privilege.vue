@@ -1,9 +1,5 @@
 <template>
-  <div style="padding: 10px;">
-    <Breadcrumb :style="{margin: '20px 0'}">
-      <BreadcrumbItem to="/">服务树</BreadcrumbItem>
-      <BreadcrumbItem>Privilege</BreadcrumbItem>
-    </Breadcrumb>
+<div>
     <Card>
       <p>{{ msg }}</p>
     </Card>

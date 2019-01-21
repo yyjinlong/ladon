@@ -171,7 +171,7 @@ export default {
       del_node_dlg: false,
       ren_node_dlg: false,
       lucene: null,
-      node_list: [],
+      search_match_nodes: [],
       instance_card: false,
       formItem: {
         node_type: 'leaf',
