@@ -76,7 +76,7 @@ class STreeOperMixin(object):
                 instance = Instance()
                 instance.node_id = node_obj.id
                 instance.ip = ip
-                instance.hostname = 'l-jinlong.dev.cn0'
+                instance.hostname = 'l-pad.ops.cn9'
                 instance_list.append(instance)
             session.add_all(instance_list)
 
@@ -130,14 +130,21 @@ class STreeDataMixin(object):
                 .offset(offset)\
                 .all()
         for model in instances:
-            result_list.append({
+            hostinfo = {
                 'ip': model.ip,
                 'hostname': model.hostname,
                 'status': model.active,
                 'deploy': '',
-                'schedule': '',
+                'crontab': '',
                 'operation': ''
-            })
+            }
+            for item in model.vals:
+                if model.id == item.instance_id:
+                    hostinfo.update({
+                        item.key.key: item.value
+                    })
+                    break
+            result_list.append(hostinfo)
         count = session.query(Instance).join(Node)\
                 .filter(Node.node == node)\
                 .count()

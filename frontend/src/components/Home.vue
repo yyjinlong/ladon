@@ -4,7 +4,7 @@
       <Header :style="{position: 'fixed', width: '100%', 'z-index': '100'}">
         <Menu mode="horizontal" theme="dark" active-name="stree" @on-select="jump">
           <div class="layout-logo">
-            <img src="../assets/logo.png" style="width: 90px; height: 35px;" />
+            <img src="../assets/logo.png" style="width: 105px; height: 46px;" />
           </div>
           <div class="layout-nav">
             <MenuItem name="stree">
@@ -58,12 +58,12 @@ export default {
 }
 .layout-logo{
     width: 110px;
-    height: 35px;
+    height: 46px;
     /* background: #5b6270; */
     border-radius: 3px;
     float: left;
     position: relative;
-    top: 8px;
+    top: 3px;
     left: 10px;
 }
 .layout-nav{

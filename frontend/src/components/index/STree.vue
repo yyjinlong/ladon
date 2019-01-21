@@ -2,7 +2,8 @@
   <div class="stree" @mousedown="mouse_down($event)">
     <Split v-model="split_rate" min="285px">
       <div slot="left" class="split-pane">
-        <Input search placeholder='支持lucene语法, 如: host: "app10"' />
+        <Input search placeholder='lucene语法,如"10.11.10.2"或host: "app10"'
+               v-model="lucene" @on-enter="global_search" />
         <div id="service_tree" class="ztree"></div>
       </div>
       <div slot="right" class="split-right-pane">
@@ -169,6 +170,8 @@ export default {
       add_node_dlg: false,
       del_node_dlg: false,
       ren_node_dlg: false,
+      lucene: null,
+      node_list: [],
       instance_card: false,
       formItem: {
         node_type: 'leaf',
@@ -191,7 +194,10 @@ export default {
         view: {
           showLine: true,
           dblClickExpand: false,
-          selectedMulti: false
+          selectedMulti: false,
+          showTitle: false,
+          showIcon: true,
+          fontCss: this.font_css
         },
         data: {
           simpleData: {
@@ -219,12 +225,17 @@ export default {
         }
         this.tree_nodes = r.data.tree_list;
         this.tip_node = r.data.expand_node;
-        let expand_node = 'com.card';
 
         $.fn.zTree.init($('#service_tree'), this.setting, this.tree_nodes);
         this.ztree_obj = $.fn.zTree.getZTreeObj('service_tree');
-        this.ztree_obj.selectNode(this.ztree_obj.getNodeByParam('id', expand_node, null));
+        this.ztree_obj.selectNode(this.ztree_obj.getNodeByParam('id', this.tip_node, null));
 
+        // NOTE(更新search_match_nodes)
+        console.log(this.search_match_nodes);
+        if (this.search_match_nodes && this.search_match_nodes.length > 0) {
+          this.search_match_nodes = [];
+          this.search_match_nodes.push(this.ztree_obj.getNodeByParam('id', this.tip_node, null));
+        }
         this.load_node_info();
       }, (res) => {
         this.$Message.error('请求/load/tree接口失败!');
@@ -243,6 +254,12 @@ export default {
         this.$Message.error('请求/load/tpl接口失败!');
       });
     },
+    font_css(tree_id, node_obj) {
+      if (!!node_obj.highlight) {
+        return {color: '#428BCA', 'font-weight': 'bold'};
+      }
+      return {color: '#333', 'font-weight': 'normal'}
+    },
     ztree_click(event, tree_id, node_obj) {
       let tip_node = node_obj.id;
       this.tip_node = tip_node;
@@ -252,6 +269,7 @@ export default {
       } else {
         this.instance_card = false;
       }
+      this.highlight_nodes(false);
       this.load_node_info();
     },
     ztree_right_click(event, tree_id, node_obj) {
@@ -301,11 +319,9 @@ export default {
 			let is_leaf = 1
       let is_parent = false;
       if (this.formItem.node_type == 'directory') {
-        is_parent = true;
-				is_leaf = 0;
+          is_parent = true;
+          is_leaf = 0;
       }
-			console.log(this.formItem.node_type)
-			console.log(is_leaf);
       let new_name = this.formItem.add_node_name;
       let url = 'http://localhost:5000/stree/api/v1/add/node';
       let post_data = qs.stringify({
@@ -313,8 +329,8 @@ export default {
         leaf: is_leaf,
         pnode: tip_node_id,
         new_node: new_name,
-				op: this.formItem.op_manager,
-				rd: this.formItem.rd_manager
+        op: this.formItem.op_manager,
+        rd: this.formItem.rd_manager
       });
 			console.log(post_data);
       axios.post(url, post_data).then((res) => {
@@ -324,7 +340,7 @@ export default {
           return;
         }
         let new_node = {
-          id: tip_node_id + new_name,
+          id: tip_node_id + '.' + new_name,
           pid: tip_node_id,
           name: new_name,
           isParent: is_parent
@@ -374,6 +390,47 @@ export default {
         this.formItem.new_node_name = null;
       }
     },
+    global_search() {
+      let url = 'http://localhost:5000/stree/api/v1/query';
+      let post_data = qs.stringify({
+        lucene: this.lucene
+      });
+      axios.post(url, post_data).then((res) => {
+        let search_nodes = res.data.data;
+        // NOTE(展开节点)
+        this.search_match_nodes = [];
+        for (let expand_node of search_nodes) {
+          let node = this.ztree_obj.getNodeByParam('id', expand_node);
+          if (node == null) {
+            this.search_match_nodes = [];
+          } else {
+            this.ztree_obj.selectNode(node);
+            this.search_match_nodes.push(node);
+          }
+        }
+        // NOTE(节点信息、实例信息, 默认显示第一个节点)
+        if (this.search_match_nodes.length != 0) {
+          let default_node = this.search_match_nodes[0].id;
+          let is_parent = this.search_match_nodes[0].isParent;
+          this.tip_node = default_node;
+          this.load_node_info();
+          if (!is_parent) {
+            this.instance_card = true;
+            this.load_instance(0);
+          }
+        }
+        // NOTE(高亮选中节点)
+        this.highlight_nodes(true);
+      }, (res) => {
+        this.$Message.error('请求/query接口失败!');
+      });
+    },
+    highlight_nodes(is_highlight) {
+      for (let node of this.search_match_nodes) {
+        node.highlight = is_highlight;
+        this.ztree_obj.updateNode(node);
+      }
+    },
     instance_edit(index) {
       let name = this.instances[index].name;
       console.log(name);
@@ -383,7 +440,6 @@ export default {
       console.log(name);
     },
     change_page(index) {
-      console.log(index);
       let offset = (index - 1) * 10;
       this.load_instance(offset);
     },
@@ -403,7 +459,7 @@ export default {
         {title: 'IP地址', key: 'ip', sortable: true},
         {title: '服役状态', key: 'status', width: 150, slot: 'instance_status'},
         {title: '部署分组', key: 'deploy', width: 150},
-        {title: '定时任务', key: 'schedule', width: 150},
+        {title: '定时任务', key: 'crontab', width: 150},
         {title: '操作', key: 'operation', width: 150, slot: 'action'}
       ];
       let post_data = qs.stringify({
@@ -424,7 +480,6 @@ export default {
         node: this.tip_node
       });
       axios.post(url, post_data).then((res) => {
-        console.log(res.data);
         this.tpl_type = res.data.data.tpl;
         this.op_manager = res.data.data.op;
         this.rd_manager = res.data.data.rd;
@@ -436,14 +491,12 @@ export default {
       this.instance_dlg = true;
     },
     do_add_instance() {
-      console.log(this.formItem.new_instance);
       let post_data = qs.stringify({
         node: this.tip_node,
         ips: this.formItem.new_instance
       });
       let url = 'http://localhost:5000/stree/api/v1/add/instance';
       axios.post(url, post_data).then((res) => {
-        console.log(res.data);
         this.load_instance(0);
       }, (res) => {
         this.$Message.error('请求/add/instance接口失败!');

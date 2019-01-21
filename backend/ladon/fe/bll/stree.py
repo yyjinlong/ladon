@@ -5,6 +5,17 @@
 # Author: Jinlong Yang
 #
 
+
+from osmo.db import get_session
+
+from ladon.db.model import (
+    Tpl,
+    Node,
+    Instance,
+    Key,
+    Val
+)
+from ladon.util.search import ESHandler
 from ladon.fe.bll.base import STreeOperMixin, STreeDataMixin
 
 
@@ -30,4 +41,10 @@ class STreeV1Layer(STreeOperMixin, STreeDataMixin):
 
     def node_info(self, username, data):
         result_info = self.query_node_info(username, data)
+        return result_info
+
+    def query(self, username, data):
+        lucene = data.get('lucene')
+        es_handler = ESHandler()
+        result_info = es_handler.query(lucene)
         return result_info

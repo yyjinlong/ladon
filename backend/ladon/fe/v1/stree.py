@@ -82,3 +82,13 @@ def load_node_info():
     result_info = layer.node_info(username, data)
     r = util.context(util.Interface.Success.value, data=result_info)
     return jsonify(r)
+
+
+@bp.route('/query', methods=['POST', 'GET'])
+def query():
+    username = 'yangjinlong'
+    data = request.form
+    layer = STreeV1Layer()
+    result_info = layer.query(username, data)
+    r = util.context(util.Interface.Success.value, data=result_info)
+    return jsonify(r)

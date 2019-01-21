@@ -15,12 +15,12 @@ from osmo.wsgi import WSGIApplication
 LOG = logging.getLogger(__name__)
 
 
-class STreeApplication(WSGIApplication):
+class STreeWebApplication(WSGIApplication):
     name = 'stree wsgi'
     version = 'v0.1'
 
     def init_flask(self):
-        super(STreeApplication, self).init_flask()
+        super(STreeWebApplication, self).init_flask()
 
         app = self.flask_app
         CORS(app, resources=r'/*')

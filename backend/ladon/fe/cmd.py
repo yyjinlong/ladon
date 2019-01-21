@@ -5,7 +5,7 @@
 # Author: Jinlong Yang
 #
 
-from ladon.fe.app import STreeApplication
+from ladon.fe.app import STreeWebApplication
 
-app = STreeApplication()
+app = STreeWebApplication()
 ladon_fe = app.entry_point()
