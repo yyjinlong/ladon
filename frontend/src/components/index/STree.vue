@@ -396,9 +396,11 @@ export default {
         lucene: this.lucene
       });
       axios.post(url, post_data).then((res) => {
-        let search_nodes = res.data.data;
-        // NOTE(展开节点)
+        // NOTE(消除已搜索的节点)
+        this.highlight_nodes(false);
         this.search_match_nodes = [];
+        // NOTE(展开节点)
+        let search_nodes = res.data.data;
         for (let expand_node of search_nodes) {
           let node = this.ztree_obj.getNodeByParam('id', expand_node);
           if (node == null) {

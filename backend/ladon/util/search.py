@@ -20,6 +20,27 @@ class ESHandler(object):
                                 sniff_on_start=True,
                                 sniff_on_connection_fail=True,
                                 sniffer_timeout=10)
+        self.create_index()
+
+    def create_index(self):
+        r = self.es.indices.create(self._index, ignore=400)
+        print (r)
+        if r.get('acknowledged'):
+            return True
+        elif r.get('status') == 400:
+            return True
+        return False
+
+    def delete_index(self):
+        r = self.es.indices.delete(index=self._index, ignore=[400, 404])
+        if r.get('acknowledged'):
+            return True
+        elif r.get('status') in [400, 404]:
+            return True
+        return False
+
+    def index_write(self, data):
+        self.es.index(index=self._index, doc_type=self._type, body=data)
 
     def bulk_write(self, package):
         actions = [
