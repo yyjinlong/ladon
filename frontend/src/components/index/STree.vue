@@ -31,6 +31,45 @@
             </Col>
           </Row>
         </Card>
+
+        <Card :style="{margin: '25px 0 10px 0'}" v-if="organization_card">
+          <p slot="title" style="height: 22px;">
+            <Icon type="md-git-branch" size="24"></Icon>&nbsp;服务组织关系
+          </p>
+          <Timeline>
+            <template v-for="(node, index) in node_list">
+              <TimelineItem color="green" v-if="index == 0">
+                <p class="time">{{ node }}</p>
+                <p class="content">根节点</p>
+              </TimelineItem>
+              <TimelineItem color="green" v-else-if="index == 1">
+                <p class="time">{{ node }}</p>
+                <p class="content">公司</p>
+              </TimelineItem>
+              <TimelineItem color="green" v-else-if="index == 2">
+                <p class="time">{{ node }}</p>
+                <p class="content">运维分组</p>
+              </TimelineItem>
+              <TimelineItem color="green" v-else-if="index == 3">
+                <p class="time">{{ node }}</p>
+                <p class="content">产品线</p>
+              </TimelineItem>
+              <TimelineItem color="green" v-else-if="index == 4">
+                <p class="time">{{ node }}</p>
+                <p class="content">子系统</p>
+              </TimelineItem>
+              <TimelineItem color="green" v-else-if="index == 5">
+                <p class="time">{{ node }}</p>
+                <p class="content">服务</p>
+              </TimelineItem>
+              <TimelineItem color="green" v-else-if="index == 6">
+                <p class="time">{{ node }}</p>
+                <p class="content">模块</p>
+              </TimelineItem>
+            </template>
+          </Timeline>
+        </Card>
+
         <Card :style="{margin: '25px 0 10px 0'}" v-if="instance_card">
           <p slot="title">
             <Icon type="ios-card" size="24"></Icon>&nbsp;节点实例信息
@@ -172,7 +211,9 @@ export default {
       ren_node_dlg: false,
       lucene: null,
       search_match_nodes: [],
+      organization_card: false,
       instance_card: false,
+      node_list: [],
       formItem: {
         node_type: 'leaf',
         add_node_name: null,
@@ -236,7 +277,10 @@ export default {
           this.search_match_nodes = [];
           this.search_match_nodes.push(this.ztree_obj.getNodeByParam('id', this.tip_node, null));
         }
+
         this.load_node_info();
+        this.organization_card = true;
+        this.node_list = this.tip_node.split('.');
       }, (res) => {
         this.$Message.error('请求/load/tree接口失败!');
       });
@@ -264,9 +308,12 @@ export default {
       let tip_node = node_obj.id;
       this.tip_node = tip_node;
       if (node_obj.isParent == false) {
+        this.organization_card = false;
         this.instance_card = true;
         this.load_instance(0);
       } else {
+        this.organization_card = true;
+        this.node_list = tip_node.split('.');
         this.instance_card = false;
       }
       this.highlight_nodes(false);
@@ -417,6 +464,7 @@ export default {
           this.tip_node = default_node;
           this.load_node_info();
           if (!is_parent) {
+            this.organization_card = false;
             this.instance_card = true;
             this.load_instance(0);
           }
