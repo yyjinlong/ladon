@@ -13,6 +13,7 @@ from flask import (
 )
 
 import ladon.util as util
+from ladon.fe.decor import sync
 from ladon.fe.bll.stree import STreeV1Layer
 
 bp = Blueprint('stree', __name__)
@@ -35,6 +36,7 @@ def load_tpl():
 
 
 @bp.route('/add/node', methods=['POST', 'GET'])
+@sync(param={'oper_type': util.Operation.ADD_NODE})
 def add_node():
     username = 'yangjinlong'
     data = request.form
@@ -65,6 +67,7 @@ def load_instance():
 
 
 @bp.route('/add/instance', methods=['POST', 'GET'])
+@sync(param={'oper_type': util.Operation.ADD_HOST})
 def add_instance():
     username = 'yangjinlong'
     data = request.form

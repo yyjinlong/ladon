@@ -29,6 +29,8 @@ class STreeOperMixin(object):
         self._add(username, new_node, new_node_path, data)
 
         # NOTE(owt层级, 需自动添加backpool)
+        print (len(pnode.split('.')))
+        print (int(leaf))
         if len(pnode.split('.')) == 3 and int(leaf) == 0:
             backpool_path = '%s.backpool' % pnode
             self._add(username, 'backpool', backpool_path, data)
