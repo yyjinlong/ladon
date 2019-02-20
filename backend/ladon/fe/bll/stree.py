@@ -32,6 +32,9 @@ class STreeV1Layer(STreeOperMixin, STreeDataMixin):
     def addition(self, username, data):
         self.add_node(username, data)
 
+    def delete(self, username, data):
+        self.del_node(username, data)
+
     def instance(self, username, data):
         result_info = self.query_instance(username, data)
         return result_info

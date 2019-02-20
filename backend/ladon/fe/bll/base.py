@@ -5,6 +5,7 @@
 # Author: Jinlong Yang
 #
 
+from sqlalchemy import text
 from oslo_log import log as logging
 from osmo.db import get_session, model_query
 
@@ -26,18 +27,16 @@ class STreeOperMixin(object):
         pnode = data.get('pnode')
         new_node = data.get('new_node')
         new_node_path = '%s.%s' % (pnode, new_node)
-        self._add(username, new_node, new_node_path, data)
+        self._add(username, new_node, new_node_path, leaf, data)
 
         # NOTE(owt层级, 需自动添加backpool)
-        print (len(pnode.split('.')))
-        print (int(leaf))
-        if len(pnode.split('.')) == 3 and int(leaf) == 0:
-            backpool_path = '%s.backpool' % pnode
-            self._add(username, 'backpool', backpool_path, data)
+        if len(new_node_path.split('.')) == 3 and int(leaf) == 0:
+            backpool_path = '%s.backpool' % new_node_path
+            print (backpool_path)
+            self._add(username, 'backpool', backpool_path, 1, data)
 
-    def _add(self, username, name, new_node_path, data):
+    def _add(self, username, name, new_node_path, leaf, data):
         tpl = data.get('tpl')
-        leaf = data.get('leaf')
         session = get_session()
         with session.begin(subtransactions=True):
             node = session.query(Node)\
@@ -59,7 +58,14 @@ class STreeOperMixin(object):
                          % (username, new_node_path))
 
     def del_node(self, username, data):
-        pass
+        node = data.get('node')
+        session = get_session()
+        with session.begin(subtransactions=True):
+            sql = text('select * from tb_node where node <@ :node')
+            r = session.execute(sql, {'node': node})
+            print (r)
+            for row in r:
+                print (row)
 
     def ren_node(self, username, data):
         pass

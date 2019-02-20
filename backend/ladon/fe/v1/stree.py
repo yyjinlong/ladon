@@ -48,7 +48,12 @@ def add_node():
 
 @bp.route('/del/node', methods=['POST', 'GET'])
 def del_node():
-    pass
+    username = 'yangjinlong'
+    data = request.form
+    layer = STreeV1Layer()
+    layer.delete(username, data)
+    r = util.context(util.Interface.Success.value)
+    return jsonify(r)
 
 
 @bp.route('/ren/node', methods=['POST', 'GET'])

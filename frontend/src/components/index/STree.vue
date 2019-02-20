@@ -363,7 +363,7 @@ export default {
       let tip_node_id = tip_node_obj.id;
       let tip_node_pid = tip_node_obj.pid
       let tip_node_name = tip_node_obj.name;
-			let is_leaf = 1
+      let is_leaf = 1
       let is_parent = false;
       if (this.formItem.node_type == 'directory') {
           is_parent = true;
@@ -372,14 +372,14 @@ export default {
       let new_name = this.formItem.add_node_name;
       let url = 'http://localhost:5000/stree/api/v1/add/node';
       let post_data = qs.stringify({
-				tpl: this.tpl,
+        tpl: this.tpl,
         leaf: is_leaf,
         pnode: tip_node_id,
         new_node: new_name,
         op: this.formItem.op_manager,
         rd: this.formItem.rd_manager
       });
-			console.log(post_data);
+      console.log(post_data);
       axios.post(url, post_data).then((res) => {
         let r = res.data;
         if (r.code != 0) {
@@ -416,7 +416,17 @@ export default {
             node: node_obj.id
           });
           console.log(post_data);
-          this.ztree_obj.removeNode(node_obj);
+          let url = 'http://localhost:5000/stree/api/v1/del/node';
+          axios.post(url, post_data).then((res) => {
+            let r = res.data;
+            if (r.code != 0) {
+              this.$Message.warning(r.msg);
+              return;
+            }
+            this.ztree_obj.removeNode(node_obj);
+          }, (res) => {
+            this.$Message.error('请求/del/node接口失败!');
+          });
         }
       }
     },
