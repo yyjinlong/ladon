@@ -9,7 +9,7 @@ from sqlalchemy import text
 from oslo_log import log as logging
 from osmo.db import get_session, model_query
 
-from ladon.db.model import (
+from stree.db.model import (
     Tpl,
     Node,
     Instance,

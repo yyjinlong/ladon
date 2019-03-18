@@ -12,9 +12,9 @@ from flask import (
     jsonify
 )
 
-import ladon.util as util
-from ladon.fe.decor import sync
-from ladon.fe.bll.stree import STreeV1Layer
+import stree.util as util
+from stree.fe.decor import sync
+from stree.fe.bll.stree import STreeV1Layer
 
 bp = Blueprint('stree', __name__)
 

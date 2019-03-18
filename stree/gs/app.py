@@ -9,9 +9,9 @@ from osmo.db import get_session
 from osmo.base import Application
 from oslo_log import log as logging
 
-from ladon.db.model import Node
-from ladon.util import GlobalSearchBase
-from ladon.util.search import ESHandler
+from stree.db.model import Node
+from stree.util import GlobalSearchBase
+from stree.util.search import ESHandler
 
 LOG = logging.getLogger(__name__)
 

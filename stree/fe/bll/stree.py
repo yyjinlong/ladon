@@ -8,15 +8,15 @@
 
 from osmo.db import get_session
 
-from ladon.db.model import (
+from stree.db.model import (
     Tpl,
     Node,
     Instance,
     Key,
     Val
 )
-from ladon.util.search import ESHandler
-from ladon.fe.bll.base import STreeOperMixin, STreeDataMixin
+from stree.util.search import ESHandler
+from stree.fe.bll.base import STreeOperMixin, STreeDataMixin
 
 
 class STreeV1Layer(STreeOperMixin, STreeDataMixin):

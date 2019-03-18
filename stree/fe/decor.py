@@ -11,9 +11,9 @@ from flask import request
 from oslo_config import cfg
 from osmo.db import get_session
 
-import ladon.util as util
-from ladon.util.search import ESHandler
-from ladon.db.model import (
+import stree.util as util
+from stree.util.search import ESHandler
+from stree.db.model import (
     Tpl,
     Node,
     Instance,

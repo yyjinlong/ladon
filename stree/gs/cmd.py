@@ -5,8 +5,8 @@
 # Author: Jinlong Yang
 #
 
-from ladon.gs.app import GlobalSearchEngine
+from stree.gs.app import GlobalSearchEngine
 
 
 app = GlobalSearchEngine()
-ladon_gs = app.entry_point()
+stree_gs = app.entry_point()
