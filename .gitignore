@@ -21,4 +21,6 @@ selenium-debug.log
 *.egg-info/
 .venv/
 .tox/
+
+# vim edit
 *.un~
